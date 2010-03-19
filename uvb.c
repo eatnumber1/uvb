@@ -12,7 +12,6 @@ static jmp_buf jump_buf;
 
 static void sigpipe_handler() {
 	signal(SIGPIPE, sigpipe_handler);
-	printf("SIGPIPE\n");
 	longjmp(jump_buf, 1);
 }
 
