@@ -7,6 +7,7 @@
 #include <string.h>
 #include <setjmp.h>
 #include <signal.h>
+#include <errno.h>
 
 static jmp_buf jump_buf;
 
@@ -37,8 +38,12 @@ int main() {
 		exit(EXIT_FAILURE);
 	}
 	if( connect(sock, (struct sockaddr *) &addr, sizeof(struct sockaddr_in)) == -1 ) {
-		perror("connect");
-		sigpipe_handler();
+		if( errno == ETIMEDOUT ) {
+			sigpipe_handler();
+		} else {
+			perror("connect");
+			exit(EXIT_FAILURE);
+		}
 	}
 	while(1) {
 		write(sock, str, len);
