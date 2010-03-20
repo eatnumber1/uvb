@@ -16,8 +16,13 @@ static void sigpipe_handler() {
 	longjmp(jump_buf, 1);
 }
 
+typedef enum {
+	false, true
+} bool;
+
 int main() {
 	register int sock;
+	bool closed = true;
 	register const char *str = "GET /fight.php?name=eatnumber1 HTTP/1.1\r\nHost: uvb.csh.rit.edu\r\nAccept: */*\r\n\r\n";
 	register const size_t len = strlen(str);
 	struct sockaddr_in addr;
@@ -28,15 +33,13 @@ int main() {
 		exit(EXIT_FAILURE);
 	}
 
-	if( setjmp(jump_buf) == 0 ) {
-		sigpipe_handler();
-	} else {
-		close(sock);
-	}
+	if( setjmp(jump_buf) == 0 ) sigpipe_handler();
+	if( !closed ) close(sock);
 	if( (sock = socket(AF_INET, SOCK_STREAM, 0)) == -1 ) {
 		perror("socket");
 		exit(EXIT_FAILURE);
 	}
+	closed = false;
 	if( connect(sock, (struct sockaddr *) &addr, sizeof(struct sockaddr_in)) == -1 ) {
 		if( errno == ETIMEDOUT || errno == ECONNREFUSED ) {
 			sigpipe_handler();
@@ -48,22 +51,10 @@ int main() {
 	char buf[1024];
 	while(1) {
 		if( write(sock, str, len) == -1 ) {
-			if( errno == EPIPE ) {
-				sigpipe_handler();
-			} else {
-				perror("write");
-				exit(EXIT_FAILURE);
-			}
+			sigpipe_handler();
 		}
 		register int count = read(sock, buf, 1024);
-		if( count == -1 ) {
-			if( errno == EPIPE ) {
-				sigpipe_handler();
-			} else {
-				perror("write");
-				exit(EXIT_FAILURE);
-			}
-		} else if( count == 0 ) {
+		if( count == -1 || count == 0 ) {
 			sigpipe_handler();
 		}
 	}
