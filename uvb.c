@@ -18,7 +18,7 @@ static void sigpipe_handler() {
 
 int main() {
 	register int sock;
-	register const char *str = "GET /fight.php?name=eatnumber1 HTTP/1.1\nHost: uvb.csh.rit.edu\nAccept: */*\n\n";
+	register const char *str = "GET /fight.php?name=eatnumber1 HTTP/1.1\r\nHost: uvb.csh.rit.edu\r\nAccept: */*\r\n\r\n";
 	register const size_t len = strlen(str);
 	struct sockaddr_in addr;
 	addr.sin_family = AF_INET;
@@ -38,14 +38,33 @@ int main() {
 		exit(EXIT_FAILURE);
 	}
 	if( connect(sock, (struct sockaddr *) &addr, sizeof(struct sockaddr_in)) == -1 ) {
-		if( errno == ETIMEDOUT ) {
+		if( errno == ETIMEDOUT || errno == ECONNREFUSED ) {
 			sigpipe_handler();
 		} else {
 			perror("connect");
 			exit(EXIT_FAILURE);
 		}
 	}
+	char buf[1024];
 	while(1) {
-		write(sock, str, len);
+		if( write(sock, str, len) == -1 ) {
+			if( errno == EPIPE ) {
+				sigpipe_handler();
+			} else {
+				perror("write");
+				exit(EXIT_FAILURE);
+			}
+		}
+		register int count = read(sock, buf, 1024);
+		if( count == -1 ) {
+			if( errno == EPIPE ) {
+				sigpipe_handler();
+			} else {
+				perror("write");
+				exit(EXIT_FAILURE);
+			}
+		} else if( count == 0 ) {
+			sigpipe_handler();
+		}
 	}
 }
