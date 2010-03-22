@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -18,11 +19,6 @@
 
 #define READBUF_SIZE 4096
 #define NUM_FDS 1
-
-typedef enum {
-	false,
-	true
-} bool;
 
 static jmp_buf jump_buf;
 static int sock;
