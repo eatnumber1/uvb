@@ -23,7 +23,7 @@ typedef enum {
 int main() {
 	register int sock;
 	bool closed = true;
-	register const char *str = "GET /fight.php?name=eatnumber1 HTTP/1.1\r\nHost: uvb.csh.rit.edu\r\nAccept: */*\r\n\r\n";
+	register const char *str = "HEAD /fight.php?name=eatnumber1 HTTP/1.1\r\nHost: uvb.csh.rit.edu\r\nAccept: */*\r\n\r\n";
 	register const size_t len = strlen(str);
 	struct sockaddr_in addr;
 	addr.sin_family = AF_INET;
