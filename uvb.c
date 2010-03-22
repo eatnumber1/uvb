@@ -101,15 +101,15 @@ do_poll_in:
 #ifdef _GNU_SOURCE
 			if( poll_fds[i].revents & POLLRDHUP ) {
 				fprintf(stderr, "poll: Remote closed connection.\n");
-				uvb_fds[i].status = UVB_FD_DISCONNECTED;
+				do_close(&uvb_fds[i]);
 			} else
 #endif
 			if( poll_fds[i].revents & POLLHUP ) {
 				fprintf(stderr, "poll: Remote closed connection.\n");
-				uvb_fds[i].status = UVB_FD_DISCONNECTED;
+				do_close(&uvb_fds[i]);
 			} else if( poll_fds[i].revents & POLLERR ) {
 				fprintf(stderr, "poll: Error\n");
-				exit(EXIT_FAILURE);
+				do_close(&uvb_fds[i]);
 			} else if( poll_fds[i].revents & POLLNVAL ) {
 				fprintf(stderr, "poll: Invalid request\n");
 				exit(EXIT_FAILURE);
