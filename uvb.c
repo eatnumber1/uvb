@@ -1,6 +1,9 @@
+#define _POSIX_C_SOURCE 1
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
@@ -8,54 +11,149 @@
 #include <setjmp.h>
 #include <signal.h>
 #include <errno.h>
+#include <poll.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <netdb.h>
+
+#define READBUF_SIZE 4096
+#define NUM_FDS 1
+
+typedef enum {
+	false,
+	true
+} bool;
 
 static jmp_buf jump_buf;
+static int sock;
 
 static void sigpipe_handler() {
 	signal(SIGPIPE, sigpipe_handler);
 	longjmp(jump_buf, 1);
+	close(sock);
 }
 
-typedef enum {
-	false, true
-} bool;
+static struct addrinfo *dnslookup() {
+	struct addrinfo hints;
+	memset(&hints, 0, sizeof(struct addrinfo));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
 
-int main() {
-	register int sock;
-	bool closed = true;
-	register const char *str = "HEAD /fight.php?name=eatnumber1 HTTP/1.1\r\nHost: uvb.csh.rit.edu\r\nAccept: */*\r\n\r\n";
-	register const size_t len = strlen(str);
-	struct sockaddr_in addr;
-	addr.sin_family = AF_INET;
-	addr.sin_port = (in_port_t) htons(80);
-	if( inet_aton("129.21.50.165", &addr.sin_addr) == 0 ) {
-		fprintf(stderr, "Illegal address\n");
+	struct addrinfo *result;
+	int code;
+	if( (code = getaddrinfo("uvb.csh.rit.edu", "http", &hints, &result)) != 0 ) {
+		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(code));
 		exit(EXIT_FAILURE);
 	}
+	return result;
+}
+
+#ifdef NDEBUG
+static void spinner() {
+	static int position = 0;
+	putc('\r', stdout);
+	switch( position ) {
+		case 0:
+			putc('|', stdout);
+			break;
+		case 1:
+			putc('/', stdout);
+			break;
+		case 2:
+			putc('-', stdout);
+			break;
+		case 3:
+			putc('\\', stdout);
+			break;
+		default:
+			fprintf(stderr, "Illegal position value %d\n", position);
+			exit(EXIT_FAILURE);
+	}
+	fflush(stdout);
+	position = (position + 1) % 4;
+}
+#endif
+
+int main() {
+	register const char *str = "HEAD /fight.php?name=eatnumber1 HTTP/1.1\r\nHost: uvb.csh.rit.edu\r\nAccept: */*\r\n\r\n";
+	register const size_t len = strlen(str);
+	struct pollfd poll_fd;
+
+	struct addrinfo *addr = dnslookup();
 
 	if( setjmp(jump_buf) == 0 ) sigpipe_handler();
-	if( !closed ) close(sock);
-	if( (sock = socket(AF_INET, SOCK_STREAM, 0)) == -1 ) {
+	if( (sock = socket(addr->ai_family, addr->ai_socktype | SOCK_NONBLOCK, addr->ai_protocol)) == -1 ) {
 		perror("socket");
 		exit(EXIT_FAILURE);
 	}
-	closed = false;
-	if( connect(sock, (struct sockaddr *) &addr, sizeof(struct sockaddr_in)) == -1 ) {
+
+	memset(&poll_fd, 0, sizeof(struct pollfd));
+	poll_fd.fd = sock;
+	poll_fd.events = POLLIN | POLLOUT;
+
+	if( connect(sock, addr->ai_addr, addr->ai_addrlen) == -1 ) {
 		if( errno == ETIMEDOUT || errno == ECONNREFUSED ) {
+			perror("connect");
 			sigpipe_handler();
-		} else {
+		} else if( errno != EINPROGRESS ) {
 			perror("connect");
 			exit(EXIT_FAILURE);
 		}
 	}
-	char buf[1024];
-	while(1) {
-		if( write(sock, str, len) == -1 ) {
+
+	while( true ) {
+		int ready = poll(&poll_fd, 1, -1);
+		if( ready == -1 ) {
+			perror("poll");
+			sigpipe_handler();
+		} else
+#ifdef _GNU_SOURCE
+		if( poll_fd.revents & POLLRDHUP ) {
+			fprintf(stderr, "poll: Remote closed connection.\n");
+			sigpipe_handler();
+		} else
+#endif
+		if( poll_fd.revents & POLLHUP ) {
+			fprintf(stderr, "poll: Remote closed connection.\n");
+			sigpipe_handler();
+		} else if( poll_fd.revents & POLLERR ) {
+			fprintf(stderr, "poll: Error\n");
+			sigpipe_handler();
+		} else if( poll_fd.revents & POLLNVAL ) {
+			fprintf(stderr, "poll: Invalid request\n");
 			sigpipe_handler();
 		}
-		register int count = read(sock, buf, 1024);
-		if( count == -1 || count == 0 ) {
+		poll_fd.events = POLLIN;
+		
+		if( write(sock, str, len) == -1 ) {
+			perror("write");
 			sigpipe_handler();
+		}
+
+		if( poll_fd.revents & POLLIN ) {
+			char buf[READBUF_SIZE];
+			while( true ) {
+				ssize_t count = read(sock, buf, READBUF_SIZE);
+				if( count == 0 ) {
+					sigpipe_handler();
+				} else if( count == -1 ) {
+					if( errno == EAGAIN || errno == EWOULDBLOCK ) {
+						break;
+					} else {
+						perror("write");
+						sigpipe_handler();
+					}
+				}
+#ifndef NDEBUG
+				buf[READBUF_SIZE - 1] = '\0';
+				printf("%s", buf);
+				fflush(stdout);
+#endif
+			}
+#ifdef NDEBUG
+			spinner();
+#endif
 		}
 	}
+	freeaddrinfo(addr);
 }
