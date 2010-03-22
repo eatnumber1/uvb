@@ -23,8 +23,8 @@
 static jmp_buf jump_buf;
 static int sock;
 
-static void sigpipe_handler() {
-	signal(SIGPIPE, sigpipe_handler);
+static void restarter() {
+	signal(SIGPIPE, restarter);
 	longjmp(jump_buf, 1);
 	close(sock);
 }
@@ -77,7 +77,7 @@ int main() {
 
 	struct addrinfo *addr = dnslookup();
 
-	if( setjmp(jump_buf) == 0 ) sigpipe_handler();
+	if( setjmp(jump_buf) == 0 ) restarter();
 	if( (sock = socket(addr->ai_family, addr->ai_socktype | SOCK_NONBLOCK, addr->ai_protocol)) == -1 ) {
 		perror("socket");
 		exit(EXIT_FAILURE);
@@ -90,7 +90,7 @@ int main() {
 	if( connect(sock, addr->ai_addr, addr->ai_addrlen) == -1 ) {
 		if( errno == ETIMEDOUT || errno == ECONNREFUSED ) {
 			perror("connect");
-			sigpipe_handler();
+			restarter();
 		} else if( errno != EINPROGRESS ) {
 			perror("connect");
 			exit(EXIT_FAILURE);
@@ -101,29 +101,29 @@ int main() {
 		int ready = poll(&poll_fd, 1, -1);
 		if( ready == -1 ) {
 			perror("poll");
-			sigpipe_handler();
+			restarter();
 		} else
 #ifdef _GNU_SOURCE
 		if( poll_fd.revents & POLLRDHUP ) {
 			fprintf(stderr, "poll: Remote closed connection.\n");
-			sigpipe_handler();
+			restarter();
 		} else
 #endif
 		if( poll_fd.revents & POLLHUP ) {
 			fprintf(stderr, "poll: Remote closed connection.\n");
-			sigpipe_handler();
+			restarter();
 		} else if( poll_fd.revents & POLLERR ) {
 			fprintf(stderr, "poll: Error\n");
-			sigpipe_handler();
+			restarter();
 		} else if( poll_fd.revents & POLLNVAL ) {
 			fprintf(stderr, "poll: Invalid request\n");
-			sigpipe_handler();
+			restarter();
 		}
 		poll_fd.events = POLLIN;
 		
 		if( write(sock, str, len) == -1 ) {
 			perror("write");
-			sigpipe_handler();
+			restarter();
 		}
 
 		if( poll_fd.revents & POLLIN ) {
@@ -131,13 +131,13 @@ int main() {
 			while( true ) {
 				ssize_t count = read(sock, buf, READBUF_SIZE);
 				if( count == 0 ) {
-					sigpipe_handler();
+					restarter();
 				} else if( count == -1 ) {
 					if( errno == EAGAIN || errno == EWOULDBLOCK ) {
 						break;
 					} else {
 						perror("write");
-						sigpipe_handler();
+						restarter();
 					}
 				}
 #ifndef NDEBUG
