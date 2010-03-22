@@ -9,24 +9,49 @@
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <string.h>
-#include <setjmp.h>
 #include <signal.h>
 #include <errno.h>
 #include <poll.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <netdb.h>
+#include <sys/resource.h>
+#include <sys/time.h>
+
+#ifdef NDEBUG
+//#include <spinner.h>
+#endif
 
 #define READBUF_SIZE 4096
-#define NUM_FDS 1
 
-static jmp_buf jump_buf;
-static int sock;
+typedef enum {
+	UVB_FD_CLOSED,
+	UVB_FD_DISCONNECTED,
+	UVB_FD_CONNECTED,
+	UVB_FD_CONNECTING
+} uvbfd_status;
 
-static void restarter() {
-	signal(SIGPIPE, restarter);
-	longjmp(jump_buf, 1);
-	close(sock);
+typedef struct {
+	struct pollfd *poll_fd;
+	uvbfd_status status;
+} uvbfd;
+
+static rlim_t max_sockets;
+
+static void do_rlimits() {
+	struct rlimit lim;
+	if( getrlimit(RLIMIT_NOFILE, &lim) == -1 ) {
+		perror("getrlimit");
+		exit(EXIT_FAILURE);
+	}
+	if( lim.rlim_cur != lim.rlim_max ) {
+		lim.rlim_cur = lim.rlim_max;
+		if( setrlimit(RLIMIT_NOFILE, &lim) == -1 ) {
+			perror("getrlimit");
+			exit(EXIT_FAILURE);
+		}
+	}
+	max_sockets = lim.rlim_cur - 4;
 }
 
 static struct addrinfo *dnslookup() {
@@ -44,112 +69,136 @@ static struct addrinfo *dnslookup() {
 	return result;
 }
 
-#ifdef NDEBUG
-static void spinner() {
-	static int position = 0;
-	putc('\r', stdout);
-	switch( position ) {
-		case 0:
-			putc('|', stdout);
-			break;
-		case 1:
-			putc('/', stdout);
-			break;
-		case 2:
-			putc('-', stdout);
-			break;
-		case 3:
-			putc('\\', stdout);
-			break;
-		default:
-			fprintf(stderr, "Illegal position value %d\n", position);
-			exit(EXIT_FAILURE);
-	}
-	fflush(stdout);
-	position = (position + 1) % 4;
+static void do_close( uvbfd *uvb_fd ) {
+	close(uvb_fd->poll_fd->fd);
+	uvb_fd->status = UVB_FD_CLOSED;
 }
+
+static void do_connect( uvbfd *uvb_fd, struct addrinfo *addr ) {
+	uvb_fd->status = UVB_FD_CONNECTING;
+do_connect_in:
+	if( connect(uvb_fd->poll_fd->fd, addr->ai_addr, addr->ai_addrlen) == -1 ) {
+		if( errno != EINPROGRESS ) {
+			perror("connect");
+			if( errno == ETIMEDOUT || errno == ECONNREFUSED ) goto do_connect_in;
+			if( errno == EINTR ) goto do_connect_in;
+			exit(EXIT_FAILURE);
+		}
+	}
+	uvb_fd->status = UVB_FD_CONNECTED;
+}
+
+static int do_poll( uvbfd *uvb_fds, struct pollfd *poll_fds ) {
+	int ready;
+do_poll_in:
+	ready = poll(poll_fds, max_sockets, -1);
+	if( ready == -1 ) {
+		perror("poll");
+		if( errno == EINTR ) goto do_poll_in;
+		exit(EXIT_FAILURE);
+	} else {
+		for( int i = 0; i < max_sockets; i++ ) {
+#ifdef _GNU_SOURCE
+			if( poll_fds[i].revents & POLLRDHUP ) {
+				fprintf(stderr, "poll: Remote closed connection.\n");
+				uvb_fds[i].status = UVB_FD_DISCONNECTED;
+			} else
 #endif
+			if( poll_fds[i].revents & POLLHUP ) {
+				fprintf(stderr, "poll: Remote closed connection.\n");
+				uvb_fds[i].status = UVB_FD_DISCONNECTED;
+			} else if( poll_fds[i].revents & POLLERR ) {
+				fprintf(stderr, "poll: Error\n");
+				exit(EXIT_FAILURE);
+			} else if( poll_fds[i].revents & POLLNVAL ) {
+				fprintf(stderr, "poll: Invalid request\n");
+				exit(EXIT_FAILURE);
+			}
+		}
+	}
+	return ready;
+}
 
 int main() {
+	do_rlimits();
+
 	register const char *str = "HEAD /fight.php?name=eatnumber1 HTTP/1.1\r\nHost: uvb.csh.rit.edu\r\nAccept: */*\r\n\r\n";
 	register const size_t len = strlen(str);
-	struct pollfd poll_fd;
+	uvbfd uvb_fds[max_sockets];
+	struct pollfd poll_fds[max_sockets];
+
+	memset(uvb_fds, 0, sizeof(uvbfd) * max_sockets);
+	memset(poll_fds, 0, sizeof(struct pollfd) * max_sockets);
 
 	struct addrinfo *addr = dnslookup();
 
-	if( setjmp(jump_buf) == 0 ) restarter();
-	if( (sock = socket(addr->ai_family, addr->ai_socktype | SOCK_NONBLOCK, addr->ai_protocol)) == -1 ) {
-		perror("socket");
-		exit(EXIT_FAILURE);
-	}
-
-	memset(&poll_fd, 0, sizeof(struct pollfd));
-	poll_fd.fd = sock;
-	poll_fd.events = POLLIN | POLLOUT;
-
-	if( connect(sock, addr->ai_addr, addr->ai_addrlen) == -1 ) {
-		if( errno == ETIMEDOUT || errno == ECONNREFUSED ) {
-			perror("connect");
-			restarter();
-		} else if( errno != EINPROGRESS ) {
-			perror("connect");
-			exit(EXIT_FAILURE);
-		}
+	for( int i = 0; i < max_sockets; i++ ) {
+		uvb_fds[i].poll_fd = &poll_fds[i];
+		uvb_fds[i].poll_fd->events = POLLIN | POLLOUT;
+		uvb_fds[i].status = UVB_FD_CLOSED;
 	}
 
 	while( true ) {
-		int ready = poll(&poll_fd, 1, -1);
-		if( ready == -1 ) {
-			perror("poll");
-			restarter();
-		} else
-#ifdef _GNU_SOURCE
-		if( poll_fd.revents & POLLRDHUP ) {
-			fprintf(stderr, "poll: Remote closed connection.\n");
-			restarter();
-		} else
-#endif
-		if( poll_fd.revents & POLLHUP ) {
-			fprintf(stderr, "poll: Remote closed connection.\n");
-			restarter();
-		} else if( poll_fd.revents & POLLERR ) {
-			fprintf(stderr, "poll: Error\n");
-			restarter();
-		} else if( poll_fd.revents & POLLNVAL ) {
-			fprintf(stderr, "poll: Invalid request\n");
-			restarter();
-		}
-		poll_fd.events = POLLIN;
-		
-		if( write(sock, str, len) == -1 ) {
-			perror("write");
-			restarter();
-		}
+		for( int i = 0; i < max_sockets; i++ ) {
+			register struct pollfd *poll_fd = uvb_fds[i].poll_fd;
+			register uvbfd *uvb_fd = &uvb_fds[i];
 
-		if( poll_fd.revents & POLLIN ) {
-			char buf[READBUF_SIZE];
-			while( true ) {
-				ssize_t count = read(sock, buf, READBUF_SIZE);
-				if( count == 0 ) {
-					restarter();
-				} else if( count == -1 ) {
-					if( errno == EAGAIN || errno == EWOULDBLOCK ) {
-						break;
-					} else {
-						perror("write");
-						restarter();
-					}
+			if( uvb_fd->status == UVB_FD_CONNECTING ) continue;
+
+			if( poll_fd->revents & POLLOUT ) {
+				if( write(poll_fd->fd, str, len) == -1 ) {
+					perror("write");
+					do_close(uvb_fd);
+					goto end;
 				}
+
+				poll_fd->events = POLLIN;
+			}
+
+			if( poll_fd->revents & POLLIN ) {
+				char buf[READBUF_SIZE];
+				while( true ) {
+					ssize_t count = read(poll_fd->fd, buf, READBUF_SIZE);
+					if( count == 0 ) {
+						fprintf(stderr, "read: Recieved EOF\n");
+						do_close(uvb_fd);
+						goto end;
+					} else if( count == -1 ) {
+						if( errno == EAGAIN || errno == EWOULDBLOCK ) {
+							break;
+						} else {
+							perror("write");
+							do_close(uvb_fd);
+							goto end;
+						}
+					}
 #ifndef NDEBUG
-				buf[READBUF_SIZE - 1] = '\0';
-				printf("%s", buf);
+					buf[READBUF_SIZE - 1] = '\0';
+					printf("%s", buf);
+					fflush(stdout);
+#endif
+				}
+#ifdef NDEBUG
+				//spinner();
+				putc('.', stdout);
 				fflush(stdout);
 #endif
+				poll_fd->events |= POLLOUT;
 			}
-#ifdef NDEBUG
-			spinner();
-#endif
+end:
+			if( uvb_fd->status == UVB_FD_CLOSED ) {
+				if( (poll_fd->fd = socket(addr->ai_family, addr->ai_socktype | SOCK_NONBLOCK, addr->ai_protocol)) == -1 ) {
+					perror("socket");
+					exit(EXIT_FAILURE);
+				}
+				uvb_fd->status = UVB_FD_DISCONNECTED;
+			}
+			if( uvb_fd->status == UVB_FD_DISCONNECTED ) {
+				do_connect(uvb_fd, addr);
+				poll_fd->events |= POLLOUT;
+			}
 		}
+		do_poll(uvb_fds, poll_fds);
 	}
 	freeaddrinfo(addr);
 }

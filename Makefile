@@ -6,6 +6,12 @@ CFLAGS += -ggdb -Wall
 
 LDFLAGS += -Wl,-O1
 
+CFLAGS += -std=c99
+
+# libspinner
+#CFLAGS += $(shell pkg-config --cflags libspinner)
+#LDFLAGS += $(shell pkg-config --libs libspinner)
+
 .PHONY: all clean
 
 all: uvb
