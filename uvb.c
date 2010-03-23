@@ -102,14 +102,17 @@ do_poll_in:
 			if( poll_fds[i].revents & POLLRDHUP ) {
 				fprintf(stderr, "poll: Remote closed connection.\n");
 				do_close(&uvb_fds[i]);
+				return -1;
 			} else
 #endif
 			if( poll_fds[i].revents & POLLHUP ) {
 				fprintf(stderr, "poll: Remote closed connection.\n");
 				do_close(&uvb_fds[i]);
+				return -1;
 			} else if( poll_fds[i].revents & POLLERR ) {
 				fprintf(stderr, "poll: Error\n");
 				do_close(&uvb_fds[i]);
+				return -1;
 			} else if( poll_fds[i].revents & POLLNVAL ) {
 				fprintf(stderr, "poll: Invalid request\n");
 				exit(EXIT_FAILURE);
@@ -198,7 +201,7 @@ end:
 				poll_fd->events |= POLLOUT;
 			}
 		}
-		do_poll(uvb_fds, poll_fds);
+		if( do_poll(uvb_fds, poll_fds) == -1 ) goto end;
 	}
 	freeaddrinfo(addr);
 }
