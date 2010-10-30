@@ -1,7 +1,5 @@
 package com.eatnumber1.uvb.server;
 
-import com.google.gson.annotations.SerializedName;
-
 import java.util.Map;
 
 /**
@@ -9,37 +7,51 @@ import java.util.Map;
  * @since 1:55:39 PM
  */
 public class GameMap {
-    @SerializedName("py/object")
-    private final String pythonObjectName;
 
-    private final char snowman;
+	private final Character SNOWMAN;
 
-    private final char tree;
+	private final Character TREE;
 
-    private final char player;
+	private final Character PLAYER;
 
-    private final char snowball;
+	private final Character SNOWBALL;
 
-    private final char edge;
+	private final Character EDGE;
 
-    private final char me;
+	private final Character ME;
 
-    private final char unknown;
+	private final Character UNKNOWN;
 
-    private final int radius;
+	private final Integer radius;
 
-    private final Map<Point, Character>[] objects;
+	private final Map<Point, Character> objects;
 
-    public GameMap( String pythonObjectName, char snowman, char tree, char player, char snowball, char edge, char me, char unknown, int radius, Map<Point, Character>[] objects ) {
-        this.pythonObjectName = pythonObjectName;
-        this.snowman = snowman;
-        this.tree = tree;
-        this.player = player;
-        this.snowball = snowball;
-        this.edge = edge;
-        this.me = me;
-        this.unknown = unknown;
-        this.radius = radius;
-        this.objects = objects;
-    }
+	// Needed by gson
+
+	private GameMap() {
+		this.SNOWMAN = null;
+		this.TREE = null;
+		this.PLAYER = null;
+		this.SNOWBALL = null;
+		this.EDGE = null;
+		this.ME = null;
+		this.UNKNOWN = null;
+		this.radius = null;
+		this.objects = null;
+	}
+
+	@Override
+	public String toString() {
+		return "GameMap{" +
+				"SNOWMAN=" + SNOWMAN +
+				", TREE=" + TREE +
+				", PLAYER=" + PLAYER +
+				", SNOWBALL=" + SNOWBALL +
+				", EDGE=" + EDGE +
+				", ME=" + ME +
+				", UNKNOWN=" + UNKNOWN +
+				", radius=" + radius +
+				", objects=" + objects +
+				'}';
+	}
 }

@@ -5,17 +5,17 @@ package com.eatnumber1.uvb;
  * @since Oct 26, 2010
  */
 public enum Command {
-    KEY("key"),
-    MOVE("move");
+	KEY("key"),
+	MOVE("move");
 
-    private String value;
+	private String value;
 
-    private Command( String value ) {
-        this.value = value;
-    }
+	private Command( String value ) {
+		this.value = value;
+	}
 
-    public static Command getCommand( String value ) {
-        for( Command c : Command.values() ) if( c.value.equals(value) ) return c;
-        throw new IllegalArgumentException("No command found for value " + value);
-    }
+	public static Command getCommand( String value ) {
+		for( Command c : Command.values() ) if( c.value.equals(value) ) return c;
+		throw new IllegalArgumentException("No command found for value " + value);
+	}
 }

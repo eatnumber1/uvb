@@ -8,5 +8,5 @@ import java.util.Scanner;
  * @since Oct 26, 2010
  */
 public interface CommandHandler {
-    void run( PrintWriter out, Scanner in );
+	void run( PrintWriter out, Scanner in );
 }
