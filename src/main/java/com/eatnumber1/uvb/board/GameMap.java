@@ -1,4 +1,4 @@
-package com.eatnumber1.uvb;
+package com.eatnumber1.uvb.board;
 
 import java.util.Map;
 
@@ -8,28 +8,18 @@ import java.util.Map;
  */
 @SuppressWarnings({ "FieldCanBeLocal" })
 public class GameMap {
-	private final Character SNOWMAN;
-	private final Character TREE;
-	private final Character PLAYER;
-	private final Character SNOWBALL;
-	private final Character EDGE;
-	private final Character ME;
-	private final Character UNKNOWN;
-	private final Integer radius;
-	private final Map<Point, Character> objects;
+	private Map<BoardObject, Character> objectTypes;
+	private Map<Point, BoardObject> objects;
+	private int radius;
 
-	// Needed by gson
+	public GameMap( Map<BoardObject, Character> objectTypes, int radius, Map<Point, BoardObject> objects ) {
+		this.objectTypes = objectTypes;
+		this.radius = radius;
+		this.objects = objects;
+	}
 
-	private GameMap() {
-		this.SNOWMAN = null;
-		this.TREE = null;
-		this.PLAYER = null;
-		this.SNOWBALL = null;
-		this.EDGE = null;
-		this.ME = null;
-		this.UNKNOWN = null;
-		this.radius = null;
-		this.objects = null;
+	private char toChar( BoardObject obj ) {
+		return objectTypes.get(obj);
 	}
 
 	@Override
@@ -43,9 +33,9 @@ public class GameMap {
 			for( int x = -radius; x <= radius; x++ ) {
 				Point point = new Point(x, y);
 				if( objects.containsKey(point) ) {
-					sb.append(objects.get(point));
+					sb.append(toChar(objects.get(point)));
 				} else {
-					sb.append(' ');
+					sb.append(toChar(BoardObject.EMPTY));
 				}
 			}
 			sb.append("|\n");
@@ -54,5 +44,10 @@ public class GameMap {
 		for( int i = -radius; i <= radius; i++ ) sb.append('-');
 		sb.append("+");
 		return sb.toString();
+	}
+
+	public BoardObject get( Point p ) {
+		if( !objects.containsKey(p) ) return BoardObject.EMPTY;
+		return BoardObject.valueOf(objects.get(p).toString());
 	}
 }

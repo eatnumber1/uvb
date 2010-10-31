@@ -1,5 +1,8 @@
 package com.eatnumber1.uvb;
 
+import com.eatnumber1.uvb.ai.DecisionEngine;
+import com.eatnumber1.uvb.board.GameMap;
+
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.IOException;

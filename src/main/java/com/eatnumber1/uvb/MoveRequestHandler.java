@@ -1,5 +1,8 @@
 package com.eatnumber1.uvb;
 
+import com.eatnumber1.uvb.ai.DecisionEngine;
+import com.eatnumber1.uvb.board.GameMap;
+import com.eatnumber1.uvb.board.GameMapDeserializer;
 import com.google.gson.GsonBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -25,7 +28,7 @@ public class MoveRequestHandler implements RequestHandler {
 		String json = in.nextLine();
 		log.trace(json);
 		GsonBuilder builder = new GsonBuilder();
-		builder.registerTypeAdapter(Point.class, new PointDeserializer());
+		builder.registerTypeAdapter(GameMap.class, new GameMapDeserializer());
 		GameMap map = builder.create().fromJson(json, GameMap.class);
 		if( log.isInfoEnabled() ) {
 			Scanner sc = new Scanner(map.toString());

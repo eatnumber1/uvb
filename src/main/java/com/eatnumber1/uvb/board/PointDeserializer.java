@@ -1,4 +1,4 @@
-package com.eatnumber1.uvb;
+package com.eatnumber1.uvb.board;
 
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
