@@ -7,6 +7,6 @@ import java.util.Scanner;
  * @author Russell Harmon
  * @since Oct 26, 2010
  */
-public interface CommandHandler {
+public interface RequestHandler {
 	void run( PrintWriter out, Scanner in );
 }

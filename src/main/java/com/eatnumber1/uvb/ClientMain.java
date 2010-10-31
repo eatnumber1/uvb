@@ -2,8 +2,6 @@ package com.eatnumber1.uvb;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
@@ -20,13 +18,13 @@ import java.security.cert.CertificateFactory;
 import java.util.Properties;
 import java.util.Scanner;
 
-public class UVBClient {
-	public static final String HOSTNAME_PROPERTY_NAME = UVBClient.class.getCanonicalName() + ".hostname";
-	public static final String PORT_PROPERTY_NAME = UVBClient.class.getCanonicalName() + ".port";
+public class ClientMain {
+	public static final String HOSTNAME_PROPERTY_NAME = ClientMain.class.getCanonicalName() + ".hostname";
+	public static final String PORT_PROPERTY_NAME = ClientMain.class.getCanonicalName() + ".port";
 
 	public static void main( String[] args ) throws IOException {
 		Properties keyProp = new Properties();
-		InputStream keyInput = new FileInputStream(args[0]);
+		InputStream keyInput = ClassLoader.getSystemResourceAsStream("key.properties");
 		try {
 			keyProp.load(keyInput);
 		} finally {
@@ -34,14 +32,13 @@ public class UVBClient {
 		}
 		String key = keyProp.getProperty("key");
 
-		File certFile = new File(args[1]);
-		InputStream certStream = new FileInputStream(certFile);
+		InputStream certStream = ClassLoader.getSystemResourceAsStream("opcomm.crt");
 		SSLContext ctx;
 		try {
 			Certificate cert = CertificateFactory.getInstance("X.509").generateCertificate(certStream);
 			KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
 			ks.load(null, null);
-			ks.setCertificateEntry(certFile.getName(), cert);
+			ks.setCertificateEntry("opcomm", cert);
 
 			TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
 			tmf.init(ks);
@@ -63,12 +60,16 @@ public class UVBClient {
 		try {
 			PrintWriter out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), Charset.forName("ASCII")), true);
 			Scanner in = new Scanner(socket.getInputStream());
-			CommandDispatcher dispatch = new CommandDispatcher();
-			dispatch.addHandler(Command.KEY, new KeyCommandHandler(key));
-			dispatch.addHandler(Command.MOVE, new MoveCommandHandler());
-			while( in.hasNextLine() ) {
-				dispatch.dispatch(Command.getCommand(in.nextLine()), out, in);
-			}
+			RequestDispatcher dispatcher = new RequestDispatcher();
+			dispatcher.addHandler(Request.KEY, new KeyRequestHandler(key));
+			DecisionEngine e = new DecisionEngine() {
+				@Override
+				public Command decide( GameMap map ) {
+					return new MoveCommand(Direction.SOUTH);
+				}
+			};
+			dispatcher.addHandler(Request.MOVE, new MoveRequestHandler(e));
+			while( in.hasNextLine() ) dispatcher.dispatch(Request.getCommand(in.nextLine()), out, in);
 		} finally {
 			socket.close();
 		}
