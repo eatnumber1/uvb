@@ -12,5 +12,5 @@ public enum BoardObject {
 	EDGE,
 	ME,
 	UNKNOWN,
-	EMPTY;
+	EMPTY
 }

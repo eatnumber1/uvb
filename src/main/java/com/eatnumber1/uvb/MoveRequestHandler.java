@@ -1,6 +1,7 @@
 package com.eatnumber1.uvb;
 
 import com.eatnumber1.uvb.ai.DecisionEngine;
+import com.eatnumber1.uvb.ai.DecisionException;
 import com.eatnumber1.uvb.board.GameMap;
 import com.eatnumber1.uvb.board.GameMapDeserializer;
 import com.google.gson.GsonBuilder;
@@ -36,6 +37,8 @@ public class MoveRequestHandler implements RequestHandler {
 				log.info(sc.nextLine());
 			}
 		}
-		out.println(engine.decide(map).serialize());
+		Command cmd = engine.decide(map);
+		if( cmd == null ) throw new DecisionException("Cannot decide what to do here.");
+		out.println(cmd.serialize());
 	}
 }

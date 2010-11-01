@@ -1,7 +1,8 @@
 package com.eatnumber1.uvb;
 
-import com.eatnumber1.uvb.ai.DecisionEngine;
-import com.eatnumber1.uvb.board.GameMap;
+import com.eatnumber1.uvb.ai.DecisionTree;
+import com.eatnumber1.uvb.ai.MoveDecision;
+import com.eatnumber1.uvb.ai.MoveToEngageDecision;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
@@ -65,13 +66,10 @@ public class ClientMain {
 			Scanner in = new Scanner(socket.getInputStream());
 			RequestDispatcher dispatcher = new RequestDispatcher();
 			dispatcher.addHandler(Request.KEY, new KeyRequestHandler(key));
-			DecisionEngine e = new DecisionEngine() {
-				@Override
-				public Command decide( GameMap map ) {
-					return new MoveCommand(Direction.SOUTH);
-				}
-			};
-			dispatcher.addHandler(Request.MOVE, new MoveRequestHandler(e));
+			DecisionTree decisionTree = new DecisionTree();
+			decisionTree.addChild(new MoveToEngageDecision());
+			decisionTree.addChild(new MoveDecision());
+			dispatcher.addHandler(Request.MOVE, new MoveRequestHandler(decisionTree));
 			while( in.hasNextLine() ) dispatcher.dispatch(Request.getCommand(in.nextLine()), out, in);
 		} finally {
 			socket.close();
