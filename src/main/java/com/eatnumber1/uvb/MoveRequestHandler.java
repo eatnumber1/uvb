@@ -1,14 +1,12 @@
 package com.eatnumber1.uvb;
 
 import com.eatnumber1.uvb.ai.DecisionEngine;
-import com.eatnumber1.uvb.ai.DecisionException;
 import com.eatnumber1.uvb.board.GameMap;
 import com.eatnumber1.uvb.board.GameMapDeserializer;
 import com.google.gson.GsonBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.io.PrintWriter;
 import java.util.Scanner;
 
 /**
@@ -25,20 +23,18 @@ public class MoveRequestHandler implements RequestHandler {
 	}
 
 	@Override
-	public void run( PrintWriter out, Scanner in ) {
-		String json = in.nextLine();
-		log.trace(json);
+	public void run( Server server ) {
+		String json = server.read();
 		GsonBuilder builder = new GsonBuilder();
 		builder.registerTypeAdapter(GameMap.class, new GameMapDeserializer());
 		GameMap map = builder.create().fromJson(json, GameMap.class);
 		if( log.isInfoEnabled() ) {
-			Scanner sc = new Scanner(map.toString());
+			Scanner sc = new Scanner(map.render());
 			while( sc.hasNextLine() ) {
 				log.info(sc.nextLine());
 			}
 		}
 		Command cmd = engine.decide(map);
-		if( cmd == null ) throw new DecisionException("Cannot decide what to do here.");
-		out.println(cmd.serialize());
+		server.write(cmd.serialize());
 	}
 }

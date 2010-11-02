@@ -22,26 +22,26 @@ public class GameMapDeserializer implements JsonDeserializer<GameMap> {
 	@Override
 	public GameMap deserialize( JsonElement json, Type typeOfT, JsonDeserializationContext context ) throws JsonParseException {
 		JsonObject obj = json.getAsJsonObject();
-		final Map<BoardObject, Character> objectTypes = new HashMap<BoardObject, Character>();
-		for( BoardObject boardObj : BoardObject.values() ) {
-			if( !BoardObject.EMPTY.equals(boardObj) ) {
-				objectTypes.put(boardObj, obj.getAsJsonPrimitive(boardObj.name()).getAsCharacter());
+		final Map<BoardObjectType, Character> objectTypes = new HashMap<BoardObjectType, Character>();
+		for( BoardObjectType boardObjType : BoardObjectType.values() ) {
+			if( !BoardObjectType.EMPTY.equals(boardObjType) ) {
+				objectTypes.put(boardObjType, obj.getAsJsonPrimitive(boardObjType.name()).getAsCharacter());
 			} else {
-				objectTypes.put(boardObj, ' ');
+				objectTypes.put(boardObjType, ' ');
 			}
 		}
 		GsonBuilder builder = new GsonBuilder();
-		builder.registerTypeAdapter(BoardObject.class, new JsonDeserializer<BoardObject>() {
+		builder.registerTypeAdapter(BoardObjectType.class, new JsonDeserializer<BoardObjectType>() {
 			@Override
-			public BoardObject deserialize( JsonElement json, Type typeOfT, JsonDeserializationContext context ) throws JsonParseException {
-				for( Entry<BoardObject, Character> e : objectTypes.entrySet() ) {
+			public BoardObjectType deserialize( JsonElement json, Type typeOfT, JsonDeserializationContext context ) throws JsonParseException {
+				for( Entry<BoardObjectType, Character> e : objectTypes.entrySet() ) {
 					if( e.getValue().equals(json.getAsCharacter()) ) return e.getKey();
 				}
 				throw new ProtocolException("Unknown object " + json.getAsCharacter());
 			}
 		});
 		builder.registerTypeAdapter(Point.class, new PointDeserializer());
-		Map<Point, BoardObject> objects = builder.create().fromJson(obj.getAsJsonObject("objects").toString(), new TypeToken<Map<Point, BoardObject>>() {
+		Map<Point, BoardObjectType> objects = builder.create().fromJson(obj.getAsJsonObject("objects").toString(), new TypeToken<Map<Point, BoardObjectType>>() {
 		}.getType());
 		return new GameMap(objectTypes, obj.getAsJsonPrimitive("radius").getAsInt(), objects);
 	}

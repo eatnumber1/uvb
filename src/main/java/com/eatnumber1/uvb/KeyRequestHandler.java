@@ -1,8 +1,5 @@
 package com.eatnumber1.uvb;
 
-import java.io.PrintWriter;
-import java.util.Scanner;
-
 /**
  * @author Russell Harmon
  * @since Oct 26, 2010
@@ -15,9 +12,8 @@ public class KeyRequestHandler implements RequestHandler {
 	}
 
 	@Override
-	public void run( PrintWriter out, Scanner in ) {
-		out.println(key);
-		if( in.nextInt() != 1 ) throw new ProtocolException("Unauthorized by server");
-		if( !"".equals(in.nextLine()) ) throw new ProtocolException("Garbage at end of payload");
+	public void run( Server server ) {
+		server.write(key);
+		if( Integer.valueOf(server.read()) != 1 ) throw new ProtocolException("Unauthorized by server");
 	}
 }

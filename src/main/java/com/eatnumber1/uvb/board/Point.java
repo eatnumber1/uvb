@@ -1,5 +1,7 @@
 package com.eatnumber1.uvb.board;
 
+import com.eatnumber1.uvb.Direction;
+
 /**
  * @author Russell Harmon
  * @since 2:07:48 PM
@@ -40,5 +42,27 @@ public class Point {
 		int result = x;
 		result = 31 * result + y;
 		return result;
+	}
+
+	public Point getAdjacentPoint( Direction direction ) {
+		switch( direction ) {
+			case EAST:
+				return new Point(x + 1, y);
+			case NORTH:
+				return new Point(x, y - 1);
+			case SOUTH:
+				return new Point(x, y + 1);
+			case WEST:
+				return new Point(x - 1, y);
+			case NORTHEAST:
+				return new Point(x + 1, y - 1);
+			case NORTHWEST:
+				return new Point(x - 1, y - 1);
+			case SOUTHEAST:
+				return new Point(x + 1, y + 1);
+			case SOUTHWEST:
+				return new Point(x - 1, y + 1);
+		}
+		throw new AssertionError();
 	}
 }

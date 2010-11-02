@@ -3,10 +3,8 @@ package com.eatnumber1.uvb;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Scanner;
 
 /**
  * @author Russell Harmon
@@ -21,8 +19,8 @@ public class RequestDispatcher {
 		handlers.put(request, handler);
 	}
 
-	public void dispatch( Request request, PrintWriter out, Scanner in ) {
+	public void dispatch( Request request, Server server ) {
 		log.debug("Dispatching request " + request);
-		handlers.get(request).run(out, in);
+		handlers.get(request).run(server);
 	}
 }

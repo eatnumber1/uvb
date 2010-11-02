@@ -1,17 +1,17 @@
 package com.eatnumber1.uvb;
 
-import com.eatnumber1.uvb.ai.DecisionTree;
-import com.eatnumber1.uvb.ai.MoveDecision;
-import com.eatnumber1.uvb.ai.MoveToEngageDecision;
+import com.eatnumber1.uvb.ai.AvoidObjectSenator;
+import com.eatnumber1.uvb.ai.CommandSenate;
+import com.eatnumber1.uvb.ai.MoveEverywhereSenator;
+import com.eatnumber1.uvb.ai.MoveToEngageSenator;
+import com.eatnumber1.uvb.ai.SimpleCommandSenate;
+import com.eatnumber1.uvb.board.BoardObjectType;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.net.Socket;
-import java.nio.charset.Charset;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -20,7 +20,6 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.util.Properties;
-import java.util.Scanner;
 
 public class ClientMain {
 	public static final String HOSTNAME_PROPERTY_NAME = ClientMain.class.getCanonicalName() + ".hostname";
@@ -62,15 +61,19 @@ public class ClientMain {
 		}
 		Socket socket = ctx.getSocketFactory().createSocket(System.getProperty(HOSTNAME_PROPERTY_NAME, "uvb.csh.rit.edu"), Integer.getInteger(PORT_PROPERTY_NAME, 13783));
 		try {
-			PrintWriter out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), Charset.forName("ASCII")), true);
-			Scanner in = new Scanner(socket.getInputStream());
+			Server server = new Server(socket.getInputStream(), socket.getOutputStream());
 			RequestDispatcher dispatcher = new RequestDispatcher();
 			dispatcher.addHandler(Request.KEY, new KeyRequestHandler(key));
-			DecisionTree decisionTree = new DecisionTree();
-			decisionTree.addChild(new MoveToEngageDecision());
-			decisionTree.addChild(new MoveDecision());
-			dispatcher.addHandler(Request.MOVE, new MoveRequestHandler(decisionTree));
-			while( in.hasNextLine() ) dispatcher.dispatch(Request.getCommand(in.nextLine()), out, in);
+			CommandSenate senate = new SimpleCommandSenate();
+			senate.addSenator(new MoveEverywhereSenator());
+			senate.addSenator(new MoveToEngageSenator());
+			senate.addSenator(new AvoidObjectSenator(BoardObjectType.TREE));
+			senate.addSenator(new AvoidObjectSenator(BoardObjectType.EDGE));
+			senate.addSenator(new AvoidObjectSenator(BoardObjectType.PLAYER));
+			senate.addSenator(new AvoidObjectSenator(BoardObjectType.SNOWBALL));
+			senate.addSenator(new AvoidObjectSenator(BoardObjectType.SNOWMAN));
+			dispatcher.addHandler(Request.MOVE, new MoveRequestHandler(senate));
+			while( server.await() ) dispatcher.dispatch(Request.getCommand(server.read()), server);
 		} finally {
 			socket.close();
 		}

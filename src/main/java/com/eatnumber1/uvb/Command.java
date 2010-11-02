@@ -6,4 +6,6 @@ package com.eatnumber1.uvb;
  */
 public interface Command {
 	String serialize();
+
+	void visit( CommandVisitor visitor );
 }
