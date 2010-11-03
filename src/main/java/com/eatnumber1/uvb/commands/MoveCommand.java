@@ -1,4 +1,7 @@
-package com.eatnumber1.uvb;
+package com.eatnumber1.uvb.commands;
+
+import com.eatnumber1.uvb.Action;
+import com.eatnumber1.uvb.Direction;
 
 /**
  * @author Russell Harmon
@@ -40,8 +43,8 @@ public class MoveCommand implements Command {
 	}
 
 	@Override
-	public void visit( CommandVisitor visitor ) {
-		visitor.visitMoveCommand(this);
+	public <T> T visit( CommandVisitor<T> visitor ) {
+		return visitor.visitMoveCommand(this);
 	}
 
 	public Direction getDirection() {

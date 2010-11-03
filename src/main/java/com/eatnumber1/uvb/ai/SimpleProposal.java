@@ -1,15 +1,15 @@
 package com.eatnumber1.uvb.ai;
 
-import com.eatnumber1.uvb.Command;
+import com.eatnumber1.uvb.commands.Command;
 
 /**
  * @author Russell Harmon
  * @since Nov 2, 2010
  */
-public class SimpleCommandProposal implements CommandProposal {
+public class SimpleProposal implements Proposal {
 	private Command command;
 
-	public SimpleCommandProposal( Command command ) {
+	public SimpleProposal( Command command ) {
 		this.command = command;
 	}
 
@@ -21,8 +21,8 @@ public class SimpleCommandProposal implements CommandProposal {
 	@Override
 	public boolean equals( Object o ) {
 		if( this == o ) return true;
-		if( !(o instanceof SimpleCommandProposal) ) return false;
-		SimpleCommandProposal that = (SimpleCommandProposal) o;
+		if( !(o instanceof SimpleProposal) ) return false;
+		SimpleProposal that = (SimpleProposal) o;
 		return !(command != null ? !command.equals(that.command) : that.command != null);
 
 	}
@@ -35,7 +35,7 @@ public class SimpleCommandProposal implements CommandProposal {
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("SimpleCommandProposal");
+		sb.append("SimpleProposal");
 		sb.append("{command=").append(command);
 		sb.append('}');
 		return sb.toString();

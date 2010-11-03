@@ -15,16 +15,16 @@ import java.util.Set;
 
 /**
  * @author Russell Harmon
- * @since Nov 2, 2010
+ * @since Nov 3, 2010
  */
-public class AvoidObjectSenator implements Senator {
-	private static Log log = LogFactory.getLog(AvoidObjectSenator.class);
+public class CollisionAvoidanceSenator implements Senator {
+	private static Log log = LogFactory.getLog(CollisionAvoidanceSenator.class);
 
-	private static final int EXPONENT = 1;
+	private static final int VOTE = -1000;
 
 	private BoardObjectType object;
 
-	public AvoidObjectSenator( BoardObjectType object ) {
+	public CollisionAvoidanceSenator( BoardObjectType object ) {
 		this.object = object;
 	}
 
@@ -41,15 +41,10 @@ public class AvoidObjectSenator implements Senator {
 			@Nullable
 			public Void visitMoveCommand( MoveCommand command ) {
 				Point p = map.getMyPosition();
-				for( int i = 0; i < map.getRadius(); i++ ) {
-					p = p.getAdjacentPoint(command.getDirection());
-					if( object.equals(map.get(p)) ) {
-						@SuppressWarnings({ "PointlessArithmeticExpression" })
-						int vote = ((map.getRadius() - i) * -1) * EXPONENT;
-						log.debug("Voting " + vote + " on " + ballot + " to avoid the " + object + " at " + p);
-						ballot.vote(vote);
-						return null;
-					}
+				p = p.getAdjacentPoint(command.getDirection());
+				if( object.equals(map.get(p)) ) {
+					log.debug("Voting " + VOTE + " on " + ballot + " to avoid a collision with a " + object + " at " + p);
+					ballot.vote(VOTE);
 				}
 				return null;
 			}

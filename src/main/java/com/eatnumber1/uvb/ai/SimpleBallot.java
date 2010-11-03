@@ -6,11 +6,11 @@ import org.jetbrains.annotations.NotNull;
  * @author Russell Harmon
  * @since Nov 2, 2010
  */
-public class SimpleCommandBallot implements CommandBallot {
+public class SimpleBallot implements Ballot {
 	private int votes;
-	private CommandProposal proposal;
+	private Proposal proposal;
 
-	public SimpleCommandBallot( CommandProposal proposal ) {
+	public SimpleBallot( Proposal proposal ) {
 		this.proposal = proposal;
 	}
 
@@ -26,20 +26,20 @@ public class SimpleCommandBallot implements CommandBallot {
 
 	@NotNull
 	@Override
-	public CommandProposal getProposal() {
+	public Proposal getProposal() {
 		return proposal;
 	}
 
 	@Override
-	public int compareTo( CommandBallot ballot ) {
+	public int compareTo( Ballot ballot ) {
 		return Integer.valueOf(votes).compareTo(ballot.tally());
 	}
 
 	@Override
 	public boolean equals( Object o ) {
 		if( this == o ) return true;
-		if( !(o instanceof SimpleCommandBallot) ) return false;
-		SimpleCommandBallot that = (SimpleCommandBallot) o;
+		if( !(o instanceof SimpleBallot) ) return false;
+		SimpleBallot that = (SimpleBallot) o;
 		return votes == that.votes && !(proposal != null ? !proposal.equals(that.proposal) : that.proposal != null);
 
 	}
@@ -54,7 +54,7 @@ public class SimpleCommandBallot implements CommandBallot {
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("SimpleCommandBallot");
+		sb.append("SimpleBallot");
 		sb.append("{votes=").append(votes);
 		sb.append(", proposal=").append(proposal);
 		sb.append('}');

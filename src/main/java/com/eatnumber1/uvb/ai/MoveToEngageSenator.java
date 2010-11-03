@@ -1,10 +1,10 @@
 package com.eatnumber1.uvb.ai;
 
 import com.eatnumber1.uvb.Direction;
-import com.eatnumber1.uvb.MoveCommand;
 import com.eatnumber1.uvb.board.BoardObjectType;
 import com.eatnumber1.uvb.board.GameMap;
 import com.eatnumber1.uvb.board.Point;
+import com.eatnumber1.uvb.commands.MoveCommand;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
@@ -17,30 +17,35 @@ import java.util.Set;
  * @author Russell Harmon
  * @since Oct 31, 2010
  */
-public class MoveToEngageSenator implements CommandSenator {
+public class MoveToEngageSenator implements Senator {
 	private static Log log = LogFactory.getLog(MoveToEngageSenator.class);
 
+	private static final int VOTE = 100;
+
 	@Nullable
-	private CommandProposal engageProposal;
+	private Proposal engageProposal;
 
 	@NotNull
 	@Override
-	public Set<CommandProposal> propose( GameMap map ) {
+	public Set<Proposal> propose( GameMap map ) {
 		Point enemy = map.find(BoardObjectType.PLAYER);
 		if( enemy == null ) {
 			log.debug("No enemy found. No proposition made.");
-			//noinspection unchecked
-			return Collections.EMPTY_SET;
+			return Collections.emptySet();
 		}
 		Direction direction = map.getDirection(enemy);
 		log.debug("Proposing we move " + direction + " to engage");
-		engageProposal = new SimpleCommandProposal(new MoveCommand(direction));
+		engageProposal = new SimpleProposal(new MoveCommand(direction));
 		return Collections.singleton(engageProposal);
 	}
 
 	@Override
-	public void vote( GameMap map, CommandBallot ballot ) {
+	public void vote( GameMap map, Ballot ballot ) {
 		if( engageProposal == null ) return;
-		if( ballot.getProposal().equals(engageProposal) ) ballot.vote(10);
+		if( ballot.getProposal().equals(engageProposal) ) {
+			log.debug("Voting " + VOTE + " on " + ballot);
+			ballot.vote(VOTE);
+			engageProposal = null;
+		}
 	}
 }

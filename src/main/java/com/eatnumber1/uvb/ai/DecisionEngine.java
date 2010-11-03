@@ -1,7 +1,7 @@
 package com.eatnumber1.uvb.ai;
 
-import com.eatnumber1.uvb.Command;
 import com.eatnumber1.uvb.board.GameMap;
+import com.eatnumber1.uvb.commands.Command;
 import org.jetbrains.annotations.NotNull;
 
 /**

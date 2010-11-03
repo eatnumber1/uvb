@@ -6,9 +6,9 @@ import org.jetbrains.annotations.NotNull;
  * @author Russell Harmon
  * @since Nov 2, 2010
  */
-public interface CommandBallot extends Comparable<CommandBallot> {
+public interface Ballot extends Comparable<Ballot> {
 	@NotNull
-	CommandProposal getProposal();
+	Proposal getProposal();
 
 	void vote( int value );
 

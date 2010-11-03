@@ -20,6 +20,7 @@ public class GameMap {
 		this.radius = radius;
 		this.objects = objects;
 
+		/*
 		for( Entry<Point, BoardObjectType> e : objects.entrySet() ) {
 			long rowRadius = Math.round(Math.sqrt(Math.pow(radius, 2) - Math.pow(e.getKey().getY(), 2)));
 			if( rowRadius > Integer.MAX_VALUE ) throw new IndexOutOfBoundsException("Number too big");
@@ -27,10 +28,35 @@ public class GameMap {
 				throw new IndexOutOfBoundsException("Board object " + e.getValue() + " outside viewport at point " + e.getKey());
 			}
 		}
+		*/
 	}
 
 	private char toChar( BoardObjectType obj ) {
 		return objectTypes.get(obj);
+	}
+
+	private int rowRadius( int y ) {
+		long rowRadius = Math.round(Math.sqrt(Math.pow(radius, 2) - Math.pow(y, 2)));
+		if( rowRadius > Integer.MAX_VALUE ) throw new IndexOutOfBoundsException("Number too big");
+		return (int) rowRadius;
+	}
+
+	private char getBorderChar( int curRadius, int prevRadius, int nextRadius, boolean left ) {
+		char open, close;
+		if( left ) {
+			open = '/';
+			close = '\\';
+		} else {
+			open = '\\';
+			close = '/';
+		}
+		if( prevRadius > curRadius || nextRadius < curRadius ) {
+			return close;
+		} else if( prevRadius < curRadius || nextRadius > curRadius ) {
+			return open;
+		} else {
+			return '|';
+		}
 	}
 
 	public String render() {
@@ -38,18 +64,18 @@ public class GameMap {
 		for( int i = 0; i <= radius; i++ ) sb.append(' ');
 		sb.append("-\n");
 
-		int last = -1;
+		int last = Integer.MIN_VALUE;
+		int next = rowRadius(-radius);
 		for( int y = -radius; y <= radius; y++ ) {
-			long rowRadiusLong = Math.round(Math.sqrt(Math.pow(radius, 2) - Math.pow(y, 2)));
-			if( rowRadiusLong > Integer.MAX_VALUE ) throw new IndexOutOfBoundsException("Number too big");
-			int rowRadius = (int) rowRadiusLong;
+			int rowRadius = next;
+			next = rowRadius(y + 1);
 			for( int i = 0; i < radius - rowRadius; i++ ) sb.append(' ');
-			sb.append(rowRadius > last ? '/' : rowRadius < last ? '\\' : '|');
+			sb.append(getBorderChar(rowRadius, last, next, true));
 			for( int x = -rowRadius; x <= rowRadius; x++ ) {
 				Point point = new Point(x, y);
 				sb.append(toChar(objects.containsKey(point) ? objects.get(point) : BoardObjectType.EMPTY));
 			}
-			sb.append(rowRadius > last ? '\\' : rowRadius < last ? '/' : '|').append('\n');
+			sb.append(getBorderChar(rowRadius, last, next, false)).append('\n');
 			last = rowRadius;
 		}
 
@@ -84,9 +110,9 @@ public class GameMap {
 			}
 		} else if( p.getX() > 0 ) {
 			if( p.getY() < 0 ) {
-				return Direction.SOUTHEAST;
-			} else if( p.getY() > 0 ) {
 				return Direction.NORTHEAST;
+			} else if( p.getY() > 0 ) {
+				return Direction.SOUTHEAST;
 			} else {
 				return Direction.EAST;
 			}

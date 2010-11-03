@@ -9,9 +9,9 @@ import java.util.Set;
  * @author Russell Harmon
  * @since Nov 2, 2010
  */
-public interface CommandSenator {
+public interface Senator {
 	@NotNull
-	Set<CommandProposal> propose( GameMap map );
+	Set<Proposal> propose( GameMap map );
 
-	void vote( GameMap map, CommandBallot ballot );
+	void vote( GameMap map, Ballot ballot );
 }

@@ -3,6 +3,7 @@ package com.eatnumber1.uvb;
 import com.eatnumber1.uvb.ai.DecisionEngine;
 import com.eatnumber1.uvb.board.GameMap;
 import com.eatnumber1.uvb.board.GameMapDeserializer;
+import com.eatnumber1.uvb.commands.Command;
 import com.google.gson.GsonBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

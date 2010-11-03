@@ -1,4 +1,4 @@
-package com.eatnumber1.uvb;
+package com.eatnumber1.uvb.commands;
 
 /**
  * @author Russell Harmon
@@ -7,5 +7,5 @@ package com.eatnumber1.uvb;
 public interface Command {
 	String serialize();
 
-	void visit( CommandVisitor visitor );
+	<T> T visit( CommandVisitor<T> visitor );
 }
