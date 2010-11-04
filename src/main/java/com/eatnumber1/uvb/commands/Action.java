@@ -1,4 +1,4 @@
-package com.eatnumber1.uvb;
+package com.eatnumber1.uvb.commands;
 
 /**
  * @author Russell Harmon

@@ -17,7 +17,7 @@ import java.util.Set;
  * @author Russell Harmon
  * @since Oct 31, 2010
  */
-public class MoveToEngageSenator implements Senator {
+public class MoveToEngageSenator extends AbstractSenator {
 	private static Log log = LogFactory.getLog(MoveToEngageSenator.class);
 
 	private static final int VOTE = 100;
@@ -29,10 +29,7 @@ public class MoveToEngageSenator implements Senator {
 	@Override
 	public Set<Proposal> propose( GameMap map ) {
 		Point enemy = map.find(BoardObjectType.PLAYER);
-		if( enemy == null ) {
-			log.debug("No enemy found. No proposition made.");
-			return Collections.emptySet();
-		}
+		if( enemy == null ) return Collections.emptySet();
 		Direction direction = map.getDirection(enemy);
 		log.debug("Proposing we move " + direction + " to engage");
 		engageProposal = new SimpleProposal(new MoveCommand(direction));

@@ -12,7 +12,7 @@ import java.util.Set;
  * @author Russell Harmon
  * @since Oct 31, 2010
  */
-public class MoveEverywhereSenator implements Senator {
+public class MoveEverywhereSenator extends AbstractSenator {
 	@NotNull
 	@Override
 	public Set<Proposal> propose( GameMap map ) {
@@ -26,9 +26,5 @@ public class MoveEverywhereSenator implements Senator {
 		proposals.add(new SimpleProposal(new MoveCommand(Direction.NORTHWEST)));
 		proposals.add(new SimpleProposal(new MoveCommand(Direction.SOUTHWEST)));
 		return proposals;
-	}
-
-	@Override
-	public void vote( GameMap map, Ballot ballot ) {
 	}
 }

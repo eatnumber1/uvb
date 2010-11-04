@@ -7,17 +7,13 @@ import com.eatnumber1.uvb.commands.AbstractCommandVisitor;
 import com.eatnumber1.uvb.commands.MoveCommand;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collections;
-import java.util.Set;
 
 /**
  * @author Russell Harmon
  * @since Nov 3, 2010
  */
-public class CollisionAvoidanceSenator implements Senator {
+public class CollisionAvoidanceSenator extends AbstractSenator {
 	private static Log log = LogFactory.getLog(CollisionAvoidanceSenator.class);
 
 	private static final int VOTE = -1000;
@@ -26,12 +22,6 @@ public class CollisionAvoidanceSenator implements Senator {
 
 	public CollisionAvoidanceSenator( BoardObjectType object ) {
 		this.object = object;
-	}
-
-	@NotNull
-	@Override
-	public Set<Proposal> propose( GameMap map ) {
-		return Collections.emptySet();
 	}
 
 	@Override

@@ -7,17 +7,13 @@ import com.eatnumber1.uvb.commands.AbstractCommandVisitor;
 import com.eatnumber1.uvb.commands.MoveCommand;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collections;
-import java.util.Set;
 
 /**
  * @author Russell Harmon
  * @since Nov 2, 2010
  */
-public class AvoidObjectSenator implements Senator {
+public class AvoidObjectSenator extends AbstractSenator {
 	private static Log log = LogFactory.getLog(AvoidObjectSenator.class);
 
 	private static final int EXPONENT = 1;
@@ -26,12 +22,6 @@ public class AvoidObjectSenator implements Senator {
 
 	public AvoidObjectSenator( BoardObjectType object ) {
 		this.object = object;
-	}
-
-	@NotNull
-	@Override
-	public Set<Proposal> propose( GameMap map ) {
-		return Collections.emptySet();
 	}
 
 	@Override

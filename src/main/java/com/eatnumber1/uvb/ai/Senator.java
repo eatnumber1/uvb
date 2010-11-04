@@ -14,4 +14,6 @@ public interface Senator {
 	Set<Proposal> propose( GameMap map );
 
 	void vote( GameMap map, Ballot ballot );
+
+	void results( Proposal winner );
 }

@@ -2,10 +2,11 @@ package com.eatnumber1.uvb;
 
 import com.eatnumber1.uvb.ai.AvoidObjectSenator;
 import com.eatnumber1.uvb.ai.CollisionAvoidanceSenator;
+import com.eatnumber1.uvb.ai.ConcurrentSenate;
+import com.eatnumber1.uvb.ai.MakeSnowballSenator;
 import com.eatnumber1.uvb.ai.MoveEverywhereSenator;
 import com.eatnumber1.uvb.ai.MoveToEngageSenator;
 import com.eatnumber1.uvb.ai.Senate;
-import com.eatnumber1.uvb.ai.SimpleSenate;
 import com.eatnumber1.uvb.board.BoardObjectType;
 
 import javax.net.ssl.SSLContext;
@@ -65,7 +66,7 @@ public class ClientMain {
 			Server server = new Server(socket.getInputStream(), socket.getOutputStream());
 			RequestDispatcher dispatcher = new RequestDispatcher();
 			dispatcher.addHandler(Request.KEY, new KeyRequestHandler(key));
-			Senate senate = new SimpleSenate();
+			Senate senate = new ConcurrentSenate();
 			senate.addSenator(new MoveEverywhereSenator());
 			senate.addSenator(new MoveToEngageSenator());
 			senate.addSenator(new CollisionAvoidanceSenator(BoardObjectType.TREE));
@@ -73,6 +74,8 @@ public class ClientMain {
 			senate.addSenator(new CollisionAvoidanceSenator(BoardObjectType.SNOWMAN));
 			senate.addSenator(new AvoidObjectSenator(BoardObjectType.PLAYER));
 			senate.addSenator(new AvoidObjectSenator(BoardObjectType.SNOWBALL));
+//			senate.addSenator(new LoopAvoidanceSenator());
+			senate.addSenator(new MakeSnowballSenator());
 			dispatcher.addHandler(Request.MOVE, new MoveRequestHandler(senate));
 			while( server.await() ) dispatcher.dispatch(Request.getCommand(server.read()), server);
 		} finally {

@@ -1,26 +1,34 @@
 package com.eatnumber1.uvb;
 
+import com.eatnumber1.uvb.board.Point;
+
 /**
  * @author Russell Harmon
  * @since Oct 31, 2010
  */
 public enum Direction {
-	NORTH(0),
-	NORTHEAST(1),
-	EAST(2),
-	SOUTHEAST(3),
-	SOUTH(4),
-	SOUTHWEST(5),
-	WEST(6),
-	NORTHWEST(7);
+	NORTH(0, new Point(0, -1)),
+	NORTHEAST(1, new Point(1, -1)),
+	EAST(2, new Point(1, 0)),
+	SOUTHEAST(3, new Point(1, 1)),
+	SOUTH(4, new Point(0, 1)),
+	SOUTHWEST(5, new Point(-1, 1)),
+	WEST(6, new Point(-1, 0)),
+	NORTHWEST(7, new Point(-1, -1));
 
 	private int value;
+	private Point point;
 
-	private Direction( int value ) {
+	private Direction( int value, Point point ) {
 		this.value = value;
+		this.point = point;
 	}
 
 	public int getValue() {
 		return value;
+	}
+
+	public Point getPoint() {
+		return point;
 	}
 }

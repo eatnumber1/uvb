@@ -50,7 +50,11 @@ public class GameMap {
 			open = '\\';
 			close = '/';
 		}
-		if( prevRadius > curRadius || nextRadius < curRadius ) {
+		if( prevRadius == curRadius && nextRadius > curRadius ) {
+			return '|';
+		} else if( prevRadius > curRadius && nextRadius == curRadius ) {
+			return '|';
+		} else if( prevRadius > curRadius || nextRadius < curRadius ) {
 			return close;
 		} else if( prevRadius < curRadius || nextRadius > curRadius ) {
 			return open;
@@ -68,7 +72,7 @@ public class GameMap {
 		int next = rowRadius(-radius);
 		for( int y = -radius; y <= radius; y++ ) {
 			int rowRadius = next;
-			next = rowRadius(y + 1);
+			next = y == radius ? Integer.MAX_VALUE : rowRadius(y + 1);
 			for( int i = 0; i < radius - rowRadius; i++ ) sb.append(' ');
 			sb.append(getBorderChar(rowRadius, last, next, true));
 			for( int x = -rowRadius; x <= rowRadius; x++ ) {

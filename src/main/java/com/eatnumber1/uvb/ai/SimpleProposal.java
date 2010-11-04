@@ -34,10 +34,6 @@ public class SimpleProposal implements Proposal {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("SimpleProposal");
-		sb.append("{command=").append(command);
-		sb.append('}');
-		return sb.toString();
+		return command.toString();
 	}
 }
