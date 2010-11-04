@@ -17,32 +17,39 @@ import java.util.Set;
  * @author Russell Harmon
  * @since Oct 31, 2010
  */
-public class MoveToEngageSenator extends AbstractSenator {
-	private static Log log = LogFactory.getLog(MoveToEngageSenator.class);
+public class MoveToSenator extends AbstractSenator {
+	private static Log log = LogFactory.getLog(MoveToSenator.class);
 
-	private static final int VOTE = 100;
+	private static final int VOTE = 50;
 
 	@Nullable
-	private Proposal engageProposal;
+	private Proposal proposal;
+
+	@NotNull
+	private BoardObjectType object;
+
+	public MoveToSenator( @NotNull BoardObjectType object ) {
+		this.object = object;
+	}
 
 	@NotNull
 	@Override
-	public Set<Proposal> propose( GameMap map ) {
-		Point enemy = map.find(BoardObjectType.PLAYER);
+	public Set<Proposal> propose( @NotNull GameMap map ) {
+		Point enemy = map.find(object);
 		if( enemy == null ) return Collections.emptySet();
 		Direction direction = map.getDirection(enemy);
 		log.debug("Proposing we move " + direction + " to engage");
-		engageProposal = new SimpleProposal(new MoveCommand(direction));
-		return Collections.singleton(engageProposal);
+		proposal = new SimpleProposal(new MoveCommand(direction));
+		return Collections.singleton(proposal);
 	}
 
 	@Override
-	public void vote( GameMap map, Ballot ballot ) {
-		if( engageProposal == null ) return;
-		if( ballot.getProposal().equals(engageProposal) ) {
+	public void vote( @NotNull GameMap map, @NotNull Ballot ballot ) {
+		if( proposal == null ) return;
+		if( ballot.getProposal().equals(proposal) ) {
 			log.debug("Voting " + VOTE + " on " + ballot);
 			ballot.vote(VOTE);
-			engageProposal = null;
+			proposal = null;
 		}
 	}
 }

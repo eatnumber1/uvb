@@ -7,6 +7,7 @@ import com.eatnumber1.uvb.commands.AbstractCommandVisitor;
 import com.eatnumber1.uvb.commands.MoveCommand;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -24,8 +25,10 @@ public class AvoidObjectSenator extends AbstractSenator {
 		this.object = object;
 	}
 
+	// TODO: Exponentially become more insistent we move.
+
 	@Override
-	public void vote( final GameMap map, final Ballot ballot ) {
+	public void vote( @NotNull final GameMap map, @NotNull final Ballot ballot ) {
 		ballot.getProposal().getCommand().visit(new AbstractCommandVisitor<Void>() {
 			@Override
 			@Nullable

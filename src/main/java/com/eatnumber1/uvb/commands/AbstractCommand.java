@@ -1,5 +1,6 @@
 package com.eatnumber1.uvb.commands;
 
+import com.eatnumber1.uvb.Direction;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -10,11 +11,12 @@ public abstract class AbstractCommand implements Command {
 	@NotNull
 	protected abstract Action getAction();
 
-	protected abstract int getValue();
+	@NotNull
+	protected abstract Direction getDirection();
 
 	@Override
 	public String serialize() {
-		return getAction().getValue() + ":" + getValue();
+		return getAction().getValue() + ":" + getDirection().getValue();
 	}
 
 	@Override
@@ -32,7 +34,7 @@ public abstract class AbstractCommand implements Command {
 		StringBuilder sb = new StringBuilder();
 		sb.append(this.getClass().getSimpleName()).append('{');
 		sb.append("action=").append(getAction().toString());
-		sb.append(", value=").append(getValue());
+		sb.append(", value=").append(getDirection());
 		sb.append("}");
 		return sb.toString();
 	}

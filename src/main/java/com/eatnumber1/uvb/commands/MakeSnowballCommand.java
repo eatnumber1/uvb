@@ -1,5 +1,6 @@
 package com.eatnumber1.uvb.commands;
 
+import com.eatnumber1.uvb.Direction;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -13,14 +14,17 @@ public class MakeSnowballCommand extends AbstractCommand {
 		return Action.MAKESNOWBALL;
 	}
 
+	@NotNull
 	@Override
-	protected int getValue() {
-		return 0;
+	protected Direction getDirection() {
+		Direction d = Direction.valueOf(0);
+		assert (d != null);
+		return d;
 	}
 
 	@Override
 	public <T> T visit( CommandVisitor<T> visitor ) {
-		return visitor.visitSnowballCommand(this);
+		return visitor.visitMakeSnowballCommand(this);
 	}
 
 	@Override

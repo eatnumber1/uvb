@@ -15,7 +15,13 @@ public abstract class AbstractCommandVisitor<T> implements CommandVisitor<T> {
 
 	@Override
 	@Nullable
-	public T visitSnowballCommand( MakeSnowballCommand command ) {
+	public T visitMakeSnowballCommand( MakeSnowballCommand command ) {
+		return null;
+	}
+
+	@Override
+	@Nullable
+	public T visitThrowSnowballCommand( ThrowSnowballCommand command ) {
 		return null;
 	}
 }

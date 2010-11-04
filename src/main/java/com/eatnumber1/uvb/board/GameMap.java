@@ -25,7 +25,7 @@ public class GameMap {
 			long rowRadius = Math.round(Math.sqrt(Math.pow(radius, 2) - Math.pow(e.getKey().getY(), 2)));
 			if( rowRadius > Integer.MAX_VALUE ) throw new IndexOutOfBoundsException("Number too big");
 			if( e.getKey().getX() > rowRadius || e.getKey().getX() < -rowRadius ) {
-				throw new IndexOutOfBoundsException("Board object " + e.getValue() + " outside viewport at point " + e.getKey());
+				throw new IndexOutOfBoundsException("Board object " + e.getDirection() + " outside viewport at point " + e.getKey());
 			}
 		}
 		*/

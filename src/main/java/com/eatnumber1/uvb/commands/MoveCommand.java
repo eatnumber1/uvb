@@ -21,11 +21,6 @@ public class MoveCommand extends AbstractCommand {
 	}
 
 	@Override
-	protected int getValue() {
-		return direction.getValue();
-	}
-
-	@Override
 	public String toString() {
 		return direction.toString();
 	}
@@ -35,6 +30,8 @@ public class MoveCommand extends AbstractCommand {
 		return visitor.visitMoveCommand(this);
 	}
 
+	@NotNull
+	@Override
 	public Direction getDirection() {
 		return direction;
 	}

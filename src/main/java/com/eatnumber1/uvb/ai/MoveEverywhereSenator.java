@@ -15,7 +15,7 @@ import java.util.Set;
 public class MoveEverywhereSenator extends AbstractSenator {
 	@NotNull
 	@Override
-	public Set<Proposal> propose( GameMap map ) {
+	public Set<Proposal> propose( @NotNull GameMap map ) {
 		Set<Proposal> proposals = new HashSet<Proposal>();
 		proposals.add(new SimpleProposal(new MoveCommand(Direction.NORTH)));
 		proposals.add(new SimpleProposal(new MoveCommand(Direction.SOUTH)));

@@ -7,5 +7,7 @@ package com.eatnumber1.uvb.commands;
 public interface CommandVisitor<T> {
 	T visitMoveCommand( MoveCommand command );
 
-	T visitSnowballCommand( MakeSnowballCommand command );
+	T visitThrowSnowballCommand( ThrowSnowballCommand command );
+
+	T visitMakeSnowballCommand( MakeSnowballCommand command );
 }

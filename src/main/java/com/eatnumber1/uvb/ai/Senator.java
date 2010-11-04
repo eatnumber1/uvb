@@ -11,9 +11,9 @@ import java.util.Set;
  */
 public interface Senator {
 	@NotNull
-	Set<Proposal> propose( GameMap map );
+	Set<Proposal> propose( @NotNull GameMap map );
 
-	void vote( GameMap map, Ballot ballot );
+	void vote( @NotNull GameMap map, @NotNull Ballot ballot );
 
-	void results( Proposal winner );
+	void results( @NotNull Proposal winner );
 }

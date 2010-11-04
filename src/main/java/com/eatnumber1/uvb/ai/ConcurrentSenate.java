@@ -1,17 +1,13 @@
 package com.eatnumber1.uvb.ai;
 
 import com.eatnumber1.uvb.board.GameMap;
-import com.eatnumber1.uvb.commands.AbstractCommandVisitor;
 import com.eatnumber1.uvb.commands.Command;
-import com.eatnumber1.uvb.commands.MoveCommand;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -92,7 +88,8 @@ public class ConcurrentSenate implements Senate {
 		}
 		await(futures);
 		futures.clear();
-		Collections.sort(ballots, new Comparator<Ballot>() {
+		Collections.shuffle(ballots);
+		/*Collections.sort(ballots, new Comparator<Ballot>() {
 			@Override
 			public int compare( Ballot ballot, final Ballot ballot1 ) {
 				Integer cmp = ballot.compareTo(ballot1);
@@ -113,7 +110,8 @@ public class ConcurrentSenate implements Senate {
 				if( cmp == null ) return 0;
 				return cmp;
 			}
-		});
+		});*/
+		Collections.sort(ballots);
 		log.trace("Voting complete. Results are: " + ballots);
 		final Ballot acceptedBallot = ballots.get(ballots.size() - 1);
 		log.debug("Ballot " + acceptedBallot + " wins.");

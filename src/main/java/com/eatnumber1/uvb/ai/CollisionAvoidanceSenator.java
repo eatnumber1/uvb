@@ -7,6 +7,7 @@ import com.eatnumber1.uvb.commands.AbstractCommandVisitor;
 import com.eatnumber1.uvb.commands.MoveCommand;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 public class CollisionAvoidanceSenator extends AbstractSenator {
 	private static Log log = LogFactory.getLog(CollisionAvoidanceSenator.class);
 
-	private static final int VOTE = -1000;
+	private static final int VOTE = -1000000;
 
 	private BoardObjectType object;
 
@@ -25,7 +26,7 @@ public class CollisionAvoidanceSenator extends AbstractSenator {
 	}
 
 	@Override
-	public void vote( final GameMap map, final Ballot ballot ) {
+	public void vote( @NotNull final GameMap map, @NotNull final Ballot ballot ) {
 		ballot.getProposal().getCommand().visit(new AbstractCommandVisitor<Void>() {
 			@Override
 			@Nullable

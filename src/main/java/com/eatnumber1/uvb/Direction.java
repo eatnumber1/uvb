@@ -1,6 +1,7 @@
 package com.eatnumber1.uvb;
 
 import com.eatnumber1.uvb.board.Point;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Russell Harmon
@@ -30,5 +31,13 @@ public enum Direction {
 
 	public Point getPoint() {
 		return point;
+	}
+
+	@Nullable
+	public static Direction valueOf( int value ) {
+		for( Direction d : Direction.values() ) {
+			if( d.value == value ) return d;
+		}
+		return null;
 	}
 }

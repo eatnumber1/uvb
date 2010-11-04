@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
  * @since Nov 2, 2010
  */
 public class SimpleBallot implements Ballot {
-	private int votes;
+	private volatile int votes;
 	private Proposal proposal;
 
 	public SimpleBallot( Proposal proposal ) {
@@ -20,7 +20,7 @@ public class SimpleBallot implements Ballot {
 	}
 
 	@Override
-	public void vote( int value ) {
+	public synchronized void vote( int value ) {
 		votes += value;
 	}
 

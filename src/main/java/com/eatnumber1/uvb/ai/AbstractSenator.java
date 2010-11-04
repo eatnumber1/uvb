@@ -13,15 +13,15 @@ import java.util.Set;
 public abstract class AbstractSenator implements Senator {
 	@NotNull
 	@Override
-	public Set<Proposal> propose( GameMap map ) {
+	public Set<Proposal> propose( @NotNull GameMap map ) {
 		return Collections.emptySet();
 	}
 
 	@Override
-	public void vote( GameMap map, Ballot ballot ) {
+	public void vote( @NotNull GameMap map, @NotNull Ballot ballot ) {
 	}
 
 	@Override
-	public void results( Proposal winner ) {
+	public void results( @NotNull Proposal winner ) {
 	}
 }
