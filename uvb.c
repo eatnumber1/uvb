@@ -62,7 +62,8 @@ static struct addrinfo *dnslookup() {
 
 	struct addrinfo *result;
 	int code;
-	if( (code = getaddrinfo("uvb.csh.rit.edu", "http", &hints, &result)) != 0 ) {
+	if( (code = getaddrinfo("www.instantfart.com", "8080", &hints, &result)) != 0 ) {
+	//if( (code = getaddrinfo("192.31.186.33", "8080", &hints, &result)) != 0 ) {
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(code));
 		exit(EXIT_FAILURE);
 	}
@@ -100,19 +101,16 @@ do_poll_in:
 		for( int i = 0; i < max_sockets; i++ ) {
 #ifdef _GNU_SOURCE
 			if( poll_fds[i].revents & POLLRDHUP ) {
-				fprintf(stderr, "poll: Remote closed connection.\n");
 				do_close(&uvb_fds[i]);
 				return -1;
 			} else
 #endif
 			if( poll_fds[i].revents & POLLHUP ) {
-				fprintf(stderr, "poll: Remote closed connection.\n");
 				do_close(&uvb_fds[i]);
 				return -1;
 			} else if( poll_fds[i].revents & POLLERR ) {
 				fprintf(stderr, "poll: Error\n");
-				do_close(&uvb_fds[i]);
-				return -1;
+				exit(EXIT_FAILURE);
 			} else if( poll_fds[i].revents & POLLNVAL ) {
 				fprintf(stderr, "poll: Invalid request\n");
 				exit(EXIT_FAILURE);
@@ -125,7 +123,7 @@ do_poll_in:
 int main() {
 	do_rlimits();
 
-	register const char *str = "HEAD /fight.php?name=eatnumber1 HTTP/1.1\r\nHost: uvb.csh.rit.edu\r\nAccept: */*\r\n\r\n";
+	register const char *str = "HEAD /+ HTTP/1.1\r\nHost: uvb.csh.rit.edu\r\nAccept: */*\r\n\r\n";
 	register const size_t len = strlen(str);
 	uvbfd uvb_fds[max_sockets];
 	struct pollfd poll_fds[max_sockets];
@@ -147,6 +145,7 @@ int main() {
 			register uvbfd *uvb_fd = &uvb_fds[i];
 
 			if( uvb_fd->status == UVB_FD_CONNECTING ) continue;
+			if( uvb_fd->status == UVB_FD_CLOSED || uvb_fd->status == UVB_FD_DISCONNECTED ) goto end;
 
 			if( poll_fd->revents & POLLOUT ) {
 				if( write(poll_fd->fd, str, len) == -1 ) {
@@ -163,7 +162,6 @@ int main() {
 				while( true ) {
 					ssize_t count = read(poll_fd->fd, buf, READBUF_SIZE);
 					if( count == 0 ) {
-						fprintf(stderr, "read: Recieved EOF\n");
 						do_close(uvb_fd);
 						goto end;
 					} else if( count == -1 ) {
@@ -201,7 +199,7 @@ end:
 				poll_fd->events |= POLLOUT;
 			}
 		}
-		if( do_poll(uvb_fds, poll_fds) == -1 ) goto end;
+		do_poll(uvb_fds, poll_fds);
 	}
 	freeaddrinfo(addr);
 }

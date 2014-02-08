@@ -1,8 +1,8 @@
 CPPFLAGS += -D_GNU_SOURCE
 CPPFLAGS += -DNDEBUG
 
-#CFLAGS += -O3 -fomit-frame-pointer -march=native
-CFLAGS += -ggdb -Wall
+CFLAGS += -O3 -fomit-frame-pointer -march=native
+#CFLAGS += -ggdb -Wall
 
 LDFLAGS += -Wl,-O1
 
