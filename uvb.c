@@ -18,6 +18,8 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 
+#define perror(foo)
+
 #ifdef NDEBUG
 //#include <spinner.h>
 #endif
@@ -62,7 +64,8 @@ static struct addrinfo *dnslookup() {
 
 	struct addrinfo *result;
 	int code;
-	if( (code = getaddrinfo("www.instantfart.com", "8080", &hints, &result)) != 0 ) {
+	//if( (code = getaddrinfo("www.instantfart.com", "http", &hints, &result)) != 0 ) {
+	if( (code = getaddrinfo("www.instantfart.com", "2000", &hints, &result)) != 0 ) {
 	//if( (code = getaddrinfo("192.31.186.33", "8080", &hints, &result)) != 0 ) {
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(code));
 		exit(EXIT_FAILURE);
@@ -120,10 +123,37 @@ do_poll_in:
 	return ready;
 }
 
+static sig_atomic_t requests, responses;
+//static sig_atomic_t requests_per_second;
+
+#define TIMING_SECONDS 10
+
+void sigusr1( int signo ) {
+	requests = 0;
+	responses = 0;
+	alarm(TIMING_SECONDS);
+}
+
+void sigalrm( int signo ) {
+	//sig_atomic_t requests_per_second = requests / TIMING_SECONDS;
+	sig_atomic_t req = requests, resp = responses;
+	printf("%d requests per second\n", req / TIMING_SECONDS);
+	printf("%d responses per second\n", resp / TIMING_SECONDS);
+}
+
 int main() {
 	do_rlimits();
 
-	register const char *str = "HEAD /+ HTTP/1.1\r\nHost: uvb.csh.rit.edu\r\nAccept: */*\r\n\r\n";
+	if( signal(SIGALRM, sigalrm) == SIG_ERR ) {
+		perror("signal");
+		exit(EXIT_FAILURE);
+	}
+	if( signal(SIGUSR1, sigusr1) == SIG_ERR ) {
+		perror("signal");
+		exit(EXIT_FAILURE);
+	}
+
+	register const char *str = "HEAD /+ HTTP/1.1\r\nHost: www.instantfart.com\r\nAccept: */*\r\n\r\n";
 	register const size_t len = strlen(str);
 	uvbfd uvb_fds[max_sockets];
 	struct pollfd poll_fds[max_sockets];
@@ -144,59 +174,56 @@ int main() {
 			register struct pollfd *poll_fd = uvb_fds[i].poll_fd;
 			register uvbfd *uvb_fd = &uvb_fds[i];
 
-			if( uvb_fd->status == UVB_FD_CONNECTING ) continue;
-			if( uvb_fd->status == UVB_FD_CLOSED || uvb_fd->status == UVB_FD_DISCONNECTED ) goto end;
-
-			if( poll_fd->revents & POLLOUT ) {
-				if( write(poll_fd->fd, str, len) == -1 ) {
-					perror("write");
-					do_close(uvb_fd);
-					goto end;
+			switch( uvb_fd->status ) {
+				case UVB_FD_CONNECTING:
+					break;
+				case UVB_FD_CLOSED: {
+					if( (poll_fd->fd = socket(addr->ai_family, addr->ai_socktype | SOCK_NONBLOCK, addr->ai_protocol)) == -1 ) {
+						perror("socket");
+						exit(EXIT_FAILURE);
+					}
+					uvb_fd->status = UVB_FD_DISCONNECTED;
+					break;
 				}
-
-				poll_fd->events = POLLIN;
-			}
-
-			if( poll_fd->revents & POLLIN ) {
-				char buf[READBUF_SIZE];
-				while( true ) {
-					ssize_t count = read(poll_fd->fd, buf, READBUF_SIZE);
-					if( count == 0 ) {
-						do_close(uvb_fd);
-						goto end;
-					} else if( count == -1 ) {
-						if( errno == EAGAIN || errno == EWOULDBLOCK ) {
-							break;
-						} else {
+				case UVB_FD_DISCONNECTED: {
+					do_connect(uvb_fd, addr);
+					poll_fd->events |= POLLOUT;
+					break;
+				}
+				case UVB_FD_CONNECTED: {
+					if( poll_fd->revents & POLLOUT ) {
+						if( write(poll_fd->fd, str, len) == -1 ) {
 							perror("write");
 							do_close(uvb_fd);
-							goto end;
+							break;
 						}
+
+						requests++;
+						poll_fd->events = POLLIN;
 					}
-#ifndef NDEBUG
-					buf[READBUF_SIZE - 1] = '\0';
-					printf("%s", buf);
-					fflush(stdout);
-#endif
+
+					if( poll_fd->revents & POLLIN ) {
+						char buf[READBUF_SIZE];
+						while( true ) {
+							ssize_t count = read(poll_fd->fd, buf, READBUF_SIZE);
+							if( count == 0 ) {
+								do_close(uvb_fd);
+								break;
+							} else if( count == -1 ) {
+								if( errno == EAGAIN || errno == EWOULDBLOCK ) {
+									break;
+								} else {
+									perror("write");
+									do_close(uvb_fd);
+									break;
+								}
+							}
+						}
+						responses++;
+						poll_fd->events |= POLLOUT;
+					}
+					break;
 				}
-#ifdef NDEBUG
-				//spinner();
-				putc('.', stdout);
-				fflush(stdout);
-#endif
-				poll_fd->events |= POLLOUT;
-			}
-end:
-			if( uvb_fd->status == UVB_FD_CLOSED ) {
-				if( (poll_fd->fd = socket(addr->ai_family, addr->ai_socktype | SOCK_NONBLOCK, addr->ai_protocol)) == -1 ) {
-					perror("socket");
-					exit(EXIT_FAILURE);
-				}
-				uvb_fd->status = UVB_FD_DISCONNECTED;
-			}
-			if( uvb_fd->status == UVB_FD_DISCONNECTED ) {
-				do_connect(uvb_fd, addr);
-				poll_fd->events |= POLLOUT;
 			}
 		}
 		do_poll(uvb_fds, poll_fds);
